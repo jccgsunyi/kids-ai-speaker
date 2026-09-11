@@ -1,0 +1,17 @@
+{
+  "name": "kids-ai-safety-filter",
+  "version": "1.0.0",
+  "description": "Safety filter proxy for Kids AI Speaker",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

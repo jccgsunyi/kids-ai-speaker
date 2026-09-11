@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  safety-filter:
+    build:
+      context: ./safety-filter
+      dockerfile: Dockerfile
+    container_name: kids-ai-safety
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PROXY_PORT=8080
+      - TARGET_BASE_URL=${ACTUAL_LLM_BASE_URL:-https://api.siliconflow.cn/v1}
+      - TARGET_API_KEY=${ACTUAL_LLM_API_KEY}
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - kids-ai-network
+
+  migpt:
+    image: idootop/mi-gpt:latest
+    container_name: kids-ai-speaker
+    restart: unless-stopped
+    environment:
+      - OPENAI_BASE_URL=http://safety-filter:8080/v1
+      - OPENAI_API_KEY=proxy-key
+      - OPENAI_MODEL=${OPENAI_MODEL:-THUDM/GLM-4-9B-0414}
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config/.migpt.js:/app/.migpt.js:ro
+      - ./logs:/app/logs
+    networks:
+      - kids-ai-network
+    depends_on:
+      - safety-filter
+
+  monitor:
+    build:
+      context: ./monitor
+      dockerfile: Dockerfile
+    container_name: kids-ai-monitor
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - LOG_PATH=/app/logs
+      - MONITOR_PASSWORD=${MONITOR_PASSWORD:-changeme123}
+    volumes:
+      - ./logs:/app/logs:ro
+      - ./data:/app/data
+    networks:
+      - kids-ai-network
+    depends_on:
+      - migpt
+
+networks:
+  kids-ai-network:
+    driver: bridge
